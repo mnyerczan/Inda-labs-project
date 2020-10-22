@@ -231,24 +231,14 @@ class BashHandler
 
                 switch($cmd)
                 {
-
-                    case "select": 
-                        {
-
-                            return (object)[
-                                "cmd" => "select",
-                                "id"=> $this->getId()
-                            ];
-
-                        } break;
-
-                    
+                                        
                     case "insert": 
                         {
 
                             // Ha a kapott útvonal invalid, 
                             if( !$path = $this->getPath())
                                 $cmdIsCorrect = false; 
+                                
                             else
                                 return (object)[
                                     "cmd" => "insert",
@@ -308,17 +298,25 @@ class BashHandler
 
                         } break;
 
+                    
+                    case "select":  
+                            return (object)[
+                                    "cmd" => "select",
+                                    "id"=> $this->getId()
+                            ]; break;
 
-                    case "select-all": return (object)[
-                        "cmd"   => "select-all",
-                        "group" => $this->getGroup()
-                    ]; 
+
+                    case "select-all": 
+                            return (object)[
+                                "cmd"   => "select-all",
+                                "group" => $this->getGroup()
+                            ]; 
 
 
                     case "exit": 
-                        return (object)[
-                            "cmd" => $cmd
-                        ];
+                            return (object)[
+                                "cmd" => $cmd
+                            ];
                 }                          
             }
         }        
