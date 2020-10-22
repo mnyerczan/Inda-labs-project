@@ -13,7 +13,7 @@ class Main
     
     private object $conn;
     private JsonJournalistMigrationHandler $jjmh;
-    private BashHandler $bash;
+    private ?BashHandler $bash;
     private PDO $pdo;
 
 

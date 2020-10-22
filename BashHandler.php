@@ -191,7 +191,7 @@ class BashHandler
 
                         {                            
                             return (object)[
-                                "cmd" => $cmd,
+                                "cmd" => "select",
                                 "id"=> $this->getId()
                             ];
 
@@ -206,7 +206,7 @@ class BashHandler
                                 $cmdIsCorrect = false; 
                             else
                                 return (object)[
-                                    "cmd" => $cmd,
+                                    "cmd" => "insert",
                                     "path"=> $path
                                 ];
 
@@ -240,20 +240,26 @@ class BashHandler
                             
 
                             return (object)[
-                                "cmd"       => $cmd,
+                                "cmd"       => "update",
                                 "alias"     => $alias,
                                 "newName"   => $newName,
                                 "newAlias"  => $newAlias,
                                 "newGroup"  => $newGroup,
                             ];  
 
-                        } break;
+                        } 
 
 
                     case "select-all": return (object)[
-                        "cmd"   => $cmd,
+                        "cmd"   => "select-all",
                         "group" => $this->getGroup()
                     ];
+
+
+                    case "exit": 
+                        return (object)[
+                            "cmd" => $cmd
+                        ];
                 }
                           
             }
