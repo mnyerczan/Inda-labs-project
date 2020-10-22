@@ -22,9 +22,11 @@ class BashHandler
     /**
      * Egyetlen példány lehet az osztályból a program életciklusa során.
      * 
+     * @return BashHandler
+     * 
      */
 
-    public static function getInstance()
+    public static function getInstance(): BashHandler
     {
 
         if (self::$instance) 
@@ -62,7 +64,7 @@ class BashHandler
 
 
     /**
-     * Parancs ellenőrzése és esetleg segítség nyújtása
+     * Parancs ellenőrzése és esetleges segítség nyújtása
      * 
      * @param string $cmd 
      * 
@@ -79,16 +81,16 @@ class BashHandler
 
     
         if (preg_match("%{$cmd}%" ,$this->commands[0]))  
-            $this->errorMsg("Rossz parancs! Talán erre gondolet: \"{$this->commands[0]}\"");
+            $this->errorMsg("Rossz parancs! Talán erre gondoltál: \"{$this->commands[0]}\"");
 
         elseif (preg_match("%{$cmd}%" ,$this->commands[1]))  
-            $this->errorMsg("Rossz parancs! Talán erre gondolet: \"{$this->commands[1]}\"");
+            $this->errorMsg("Rossz parancs! Talán erre gondoltál: \"{$this->commands[1]}\"");
 
         elseif (preg_match("%{$cmd}%" ,$this->commands[2]))  
-            $this->errorMsg("Rossz parancs! Talán erre gondolet: \"{$this->commands[2]}\", \"{$this->commands[2]}\"");
+            $this->errorMsg("Rossz parancs! Talán erre gondoltál: \"{$this->commands[2]}\", \"{$this->commands[2]}\"");
 
         elseif (preg_match("%{$cmd}%" , "-all"))
-            $this->errorMsg("Rossz parancs! Talán erre gondolet: \"{$this->commands[3]}\"");
+            $this->errorMsg("Rossz parancs! Talán erre gondoltál: \"{$this->commands[3]}\"");
 
         else 
             $this->errorMsg("Nem létező parancs: \"$cmd\"");
@@ -96,7 +98,6 @@ class BashHandler
         
         return false;
     }
-
 
 
 
@@ -138,6 +139,12 @@ class BashHandler
     }
         
 
+    /**
+     * Azonosító bekérése a felhasználótól.
+     * 
+     * @return int|false
+     */
+
     private function getId()
     {
 
@@ -161,6 +168,7 @@ class BashHandler
         
         return false;
     }
+
 
 
     /**
@@ -187,6 +195,7 @@ class BashHandler
     }
 
 
+
     /**
      * Felhasználói interakciót menedzselő függvény. Visszaadja a kapott paramétereket, ha azok helyesek.
      * 
@@ -208,12 +217,13 @@ class BashHandler
             $this->prompt();
 
 
+            // Lehet, hogy a felhasználó ütött a bemeneti karakterláncba szóközt.
+            // Ezért megpróbáljuk felbontani ezek mentén és csak az első elemet vizsgáljuk.
             $cmd = explode(" ",strtolower(readline()))[0];
 
 
             // Megvizsgáljuk, hogy a command valid-e.
             $cmdIsCorrect = $this->testCmd($cmd);
-
             
 
             if ($cmdIsCorrect)
@@ -309,8 +319,7 @@ class BashHandler
                         return (object)[
                             "cmd" => $cmd
                         ];
-                }
-                          
+                }                          
             }
         }        
     }

@@ -1,10 +1,9 @@
 <?php
 
-
-
 require "Journalist.php";
 require "JsonJournalistMigrationHandler.php";
 require "BashHandler.php";
+
 
 
 class Main
@@ -64,10 +63,12 @@ class Main
      * Insert művelet végrehajtása külső Json fájlból. 
      * A fájl csak egyetlen újságíró objektumot írhat le.
      * 
+     * @param object $input
      * 
+     * @return void
      */
 
-    private function execInsert($input)
+    private function execInsert($input): void
     {
 
         $source = json_decode(file_get_contents($input->path));
@@ -118,8 +119,15 @@ class Main
 
 
 
+    /**
+     * A módosítást irányító eljárás.
+     * 
+     * @param object $input
+     * 
+     * @return void
+     */
 
-    private function execUpdate($input)
+    private function execUpdate($input): void
     {      
 
         try
@@ -157,8 +165,15 @@ class Main
 
 
 
+    /**
+     * Az egyes újságírók lekérdezését irányító eljárás.
+     * 
+     * @param object $input
+     * 
+     * @return void
+     */
 
-    private function execSelect($input)
+    private function execSelect($input): void
     {
 
         if(!is_dir("json"))
@@ -192,9 +207,15 @@ class Main
 
 
 
+    /**
+     * Az összes, vagy csoportos újságíri lekérdezéseket irányító eljárás.
+     * 
+     * @param object $input
+     * 
+     * @return void
+     */
 
-
-    private function execSelectAll($input)
+    private function execSelectAll($input): void
     {
 
         if(!is_dir("json"))
@@ -213,7 +234,9 @@ class Main
 
                 $outputStr.= $journalists[$i]->toJson();
 
-                // Amíg nem érünk a tömm utolsó eleméhez, tegyük ki a vesszőt.
+
+                // Amíg nem érünk a tömm utolsó eleméhez, kitesszük a vesszőt az
+                // objektumok közé.
                 if ($i++ < count($journalists) -1) 
                     $outputStr.=",";
                     

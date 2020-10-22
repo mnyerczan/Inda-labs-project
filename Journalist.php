@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Modell osztály az újságírókhoz.
+ * "Modell" osztály az újságírók tárolásáhot.
  * 
  * 
  * 
@@ -11,7 +11,8 @@
 
 class Journalist
 {
-    // Felvételnél a user nem szokott azonosítót adni, ezért
+
+    // Felvételnél a usernek nincsen azonosítója, ezért
     // deklarálom nullable int-nek.    
     private ?int $id;
 
@@ -21,8 +22,11 @@ class Journalist
                 $group;
 
 
+    /**
+     *  
+     */
 
-    public function __construct($name, $alias, $group, $id = null)
+    public function __construct(string $name, string $alias, string $group, int $id = null)
     {   
 
         $this->id       = $id;
@@ -32,8 +36,9 @@ class Journalist
     }    
 
 
+
     /**
-     * Ha a kért property nem létezik dob egy UnexpectedValueException -t.
+     * Ha a kért property nem létezik dob egy UnexpectedValueException-t.
      * 
      * @throws UnexpectedValueException
      */
@@ -54,6 +59,13 @@ class Journalist
     }
 
 
+
+
+    /**
+     * Json formátumban adja vissza az belső objetum állapotát.
+     * 
+     * @return string Json format
+     */
 
     public function toJson()
     {

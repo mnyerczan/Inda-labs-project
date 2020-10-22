@@ -14,6 +14,8 @@ class JsonJournalistMigrationHandler
     /**
      * Új újságíró hozzáadása
      * 
+     * @return int Újságírók száma
+     * 
      */
 
     public function addJournalist(Journalist $journalist)
@@ -171,9 +173,9 @@ class JsonJournalistMigrationHandler
      * 
      * @param PDO $pdo
      * 
-     * @return true ha a művelet sikeresen végre tud hajtódni.     
-     * @throws PDOException
-     * 
+     * @return true ha a művelet sikeresen végre tud hajtódni.
+     *      
+     * @throws PDOException  
      * 
      */
 
