@@ -20,9 +20,9 @@ class Main
 
     public function __construct()
     {
+        
         $this->conn = json_decode(file_get_contents("connect.json"));
         $this->jjmh = new JsonJournalistMigrationHandler();
-
     }
 
 
@@ -40,16 +40,18 @@ class Main
 
         while ($this->bash)
         {
+
             $input = $this->bash->read();
    
 
             switch($input->cmd)
             {
-                case "insert":      $this->execInsert($input); break;
-                case "update":      $this->execUpdate($input); break;
-                case "select":      $this->execSelect($input); break;
-                case "select-all":  $this->execSelectAll($input); break;
-                case "exit":        $this->bash = null; break;
+
+                case "insert":      $this->execInsert($input);      break;
+                case "update":      $this->execUpdate($input);      break;
+                case "select":      $this->execSelect($input);      break;
+                case "select-all":  $this->execSelectAll($input);   break;
+                case "exit":        $this->bash = null;             break;
             }                            
   
         }
@@ -67,13 +69,16 @@ class Main
 
     private function execInsert($input)
     {
+
         $source = json_decode(file_get_contents($input->path));
 
 
         if (is_array($source))
         {
+
             foreach($source as $journalist)
             {
+
                 $this->jjmh->addJournalist(
                     new Journalist(
                         $journalist->name,
@@ -97,6 +102,7 @@ class Main
 
         try
         {
+
             $this->jjmh->export($this->pdo);
             $this->bash->successfulMsg("A feltöltés sikeres!");
             
@@ -104,6 +110,7 @@ class Main
         }
         catch (PDOException $e)
         {
+
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }                            
         
@@ -113,12 +120,13 @@ class Main
 
 
     private function execUpdate($input)
-    {
-      
+    {      
 
         try
         {
+
             $this->jjmh->importByAlias($this->pdo, $input->alias);
+
 
             $this->jjmh->update(
                 $this->pdo, 
@@ -136,10 +144,12 @@ class Main
         }        
         catch (PDOException $e)
         {
+
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
         catch (Exception $e)
         {
+
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
     
@@ -150,11 +160,13 @@ class Main
 
     private function execSelect($input)
     {
+
         if(!is_dir("json"))
             mkdir("json");
 
         try
         {
+
             $journalist = $this->jjmh->importById($this->pdo, $input->id);
 
             $rand = random_int(1000000, 10000000);
@@ -167,10 +179,12 @@ class Main
         }
         catch (PDOException $e)
         {
+
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
         catch (Exception $e)
         {
+
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
     }
@@ -182,18 +196,21 @@ class Main
 
     private function execSelectAll($input)
     {
+
         if(!is_dir("json"))
             mkdir("json");
 
         try 
         {
+
             $journalists = $this->jjmh->importAll($this->pdo, $input->group);
 
 
             
             $outputStr = "[";
             for($i = 0; $i < count($journalists);)
-            {               
+            {     
+
                 $outputStr.= $journalists[$i]->toJson();
 
                 // Amíg nem érünk a tömm utolsó eleméhez, tegyük ki a vesszőt.
@@ -216,10 +233,12 @@ class Main
         } 
         catch (PDOException $e)
         {
+
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
         catch (Exception $e)
         {
+
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
     }

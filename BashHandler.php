@@ -4,6 +4,8 @@
 
 class BashHandler
 {
+
+
     private $commands = [
         "insert",
         "update",
@@ -17,13 +19,18 @@ class BashHandler
 
 
 
-
+    /**
+     * Egyetlen példány lehet az osztályból a program életciklusa során.
+     * 
+     */
 
     public static function getInstance()
     {
+
         if (self::$instance) 
             return self::$instance;
         
+
         return self::$instance = new BashHandler();
     }
 
@@ -37,14 +44,16 @@ class BashHandler
     }
 
 
+
+
     /**
      * Segéd függvények a kiiratásokhoz.
      * 
      */
 
-    public function prompt(){echo "\e[1;32m$ \e[0m";}
-    public function errorMsg($msg){echo "\e[1;31m{$msg}\e[0m\n";}
-    public function msg($msg){echo "{$msg}\n";}
+    public function prompt(){           echo "\e[1;32m$ \e[0m";}
+    public function errorMsg($msg){     echo "\e[1;31m{$msg}\e[0m\n";}
+    public function msg($msg){          echo "{$msg}\n";}
     public function successfulMsg($msg){echo "\e[42;30m{$msg}\e[0m\n";}
     
 
@@ -111,14 +120,19 @@ class BashHandler
         { 
 
             $this->prompt();
+
+
             $path = strtolower(readline());            
+
 
             // Majd leteszteljük               
             if (is_file($path)) return $path; 
 
+
             $this->errorMsg("Érvénytelen útvonal: \"{$path}\". Hátralévő próbálkozások száma: ".(2 - $i));
 
         }          
+
 
         return false;
     }
@@ -126,12 +140,17 @@ class BashHandler
 
     private function getId()
     {
+
         for ($i=0; $i < 3; $i++) 
         { 
+
             $this->msg("Kérlek add meg a keresett újságíró azonosítóját!");
+
             $this->prompt();
 
+
             $id = readline();
+
 
             if (!is_numeric($id))
                 $this->errorMsg("Kérlek számot adj meg: \"{$id}\". Hátralévő próbálkozások száma: ".(2 - $i));
@@ -144,13 +163,23 @@ class BashHandler
     }
 
 
+    /**
+     * Csoport nevének bekérése. 
+     * 
+     * @return string 
+     */
+
     private function getGroup()
     {                
+
         $this->msg("Kérlek adj meg a szűréshez egy csoportot!");
         $this->msg("Ha csak nyomsz egy entert, a szűrés minden újságírót ki fog listázni");
+
         $this->prompt();
    
+
         $group = readline();
+
 
         // A readline ures stringet ad vissza,nem NULL értéket, ezért
         // nem használható a Null Coalescing operátor (??)
@@ -167,12 +196,17 @@ class BashHandler
     
     public function read(): object
     {
+
         $cmdIsCorrect = false;
+
 
         while ($cmdIsCorrect === false)
         {
+
             $this->msg("Kérlek válassz egyet az alábbi parancsok közül:\n[insert, update, select, select-all, exit]");
+
             $this->prompt();
+
 
             $cmd = explode(" ",strtolower(readline()))[0];
 
@@ -187,9 +221,10 @@ class BashHandler
 
                 switch($cmd)
                 {
-                    case "select": 
 
-                        {                            
+                    case "select": 
+                        {
+
                             return (object)[
                                 "cmd" => "select",
                                 "id"=> $this->getId()
@@ -199,8 +234,8 @@ class BashHandler
 
                     
                     case "insert": 
-
                         {
+
                             // Ha a kapott útvonal invalid, 
                             if( !$path = $this->getPath())
                                 $cmdIsCorrect = false; 
@@ -214,28 +249,42 @@ class BashHandler
 
 
                     case "update": 
-                        
                         {
 
                             // Bekérjük a az újságíró jelenlegi alias-át
                             $this->msg("Kérem az újságíró jelenlegi álnevét!");
+
                             $this->prompt();
+
+
                             $alias = readline(); 
+
 
                             // Bekérjük az újságíró új adatait
                             // név
                             $this->msg("Kérem az újságíró új nevét!");
+
                             $this->prompt();
+
+
                             $newName = readline();
-                                                        
+                            
+                            
                             // alias
                             $this->msg("Kérem az újságíró új álnevét!");
+
                             $this->prompt();
+
+
                             $newAlias = readline();   
+
 
                             // csoport
                             $this->msg("Kérem az újságíró új csoportját!");
+
                             $this->prompt();
+
+                            
                             $newGroup = readline();   
                             
 
@@ -247,13 +296,13 @@ class BashHandler
                                 "newGroup"  => $newGroup,
                             ];  
 
-                        } 
+                        } break;
 
 
                     case "select-all": return (object)[
                         "cmd"   => "select-all",
                         "group" => $this->getGroup()
-                    ];
+                    ]; 
 
 
                     case "exit": 

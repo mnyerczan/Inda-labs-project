@@ -1,8 +1,10 @@
 <?php
 
 
+
 class JsonJournalistMigrationHandler
 {
+
 
     private array   $journalists = [];
     private int     $counter     = 0;    
@@ -16,6 +18,7 @@ class JsonJournalistMigrationHandler
 
     public function addJournalist(Journalist $journalist)
     {
+
         $this->journalists[$this->counter++] = $journalist;
 
         return $this->counter;
@@ -43,6 +46,7 @@ class JsonJournalistMigrationHandler
         $smt = $pdo->prepare($sql);
         $smt->bindValue(":id", $id);  
 
+
         return $this->import($smt);
     }
 
@@ -63,11 +67,12 @@ class JsonJournalistMigrationHandler
     public function importByAlias(PDO $pdo, string $alias): Journalist
     {
 
-        $sql = "SELECT * FROM `Journalist` WHERE `alias` LIKE '-GJ-'";
+        $sql = "SELECT * FROM `Journalist` WHERE `alias` LIKE :alias";
+
 
         $smt = $pdo->prepare($sql);
-        $smt->bindParam(":alias", $alias);
-        
+
+        $smt->bindParam(":alias", $alias);        
 
 
         return $this->import($smt);
@@ -143,6 +148,7 @@ class JsonJournalistMigrationHandler
     
         foreach ($result as $journalist) 
         {
+
             array_push($returningArray, new Journalist(
                 $journalist->name,
                 $journalist->alias,
@@ -173,6 +179,7 @@ class JsonJournalistMigrationHandler
 
     public function export(PDO $pdo)
     {
+
         $params = $this->createInsertStatement($pdo);
         $smt    = $pdo->prepare($params->sql);
 
@@ -202,7 +209,9 @@ class JsonJournalistMigrationHandler
 
     public function update(PDO $pdo, Journalist $journalist, string $alias)
     {
+
         $sql = "UPDATE `Journalist` SET `name` = :newName, `alias` = :newAlias, `group` = :newGroup WHERE `alias` = :alias";
+
 
         $smt = $pdo->prepare($sql);
 
@@ -229,23 +238,30 @@ class JsonJournalistMigrationHandler
 
 
     /**
+     * Előállítja az sql utasítást és a hozzá tartozó paramétereket.
+     * 
      * @return StdObject
      * 
      */
 
     private function createInsertStatement()
     {   
+
         $binds  = [];  
         $sql    = "";   
 
+
         for($i = 0; $i < $this->counter; $i++)
         {
+
             $sql.="INSERT INTO `Journalist`(`name`,`alias`,`group`) VALUES (:name_{$i}, :alias_{$i} ,:group_{$i});";
+
 
             $binds[":name_{$i}"] = $this->journalists[$i]->name;
             $binds[":alias_{$i}"] = $this->journalists[$i]->alias;
             $binds[":group_{$i}"] = $this->journalists[$i]->group;
         }
+        
 
         return (object)[
             "sql"   => $sql,
