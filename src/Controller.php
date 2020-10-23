@@ -20,21 +20,18 @@ class Controller
     
 
     private Migrate      $jjmh;
-    private ?BashHandler $bash;
-    private PDO          $pdo;
+    private ?BashHandler $bash; 
     private object       $input;
 
 
 
     public function __construct()
     {
-                     
-        $this->jjmh = new Migrate();
+                       
         $this->bash = bashHandler::getInstance();
 
 
         $dbConnect = ".dbConnect.json";
-
 
         $conn = json_decode(file_get_contents($dbConnect));   
 
@@ -44,14 +41,14 @@ class Controller
 
             // A PDO PDOException-t dob, ha a hibás paraméterek miatt nem képes megnyitni a 
             // kacsolatot.
-            $this->pdo = new PDO(
+            $pdo = new PDO(
                 "{$conn->sdn}:host={$conn->host};dbname={$conn->dbname};charset=utf8;",
                 $conn->user, 
                 $conn->password
             );
 
-            
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            $this->jjmh = new Migrate($pdo);
         }
 
         catch (PDOException $e)
@@ -126,7 +123,7 @@ class Controller
 
 
             // Újságírók exportálása az adatbázisba
-            $this->jjmh->export($this->pdo);
+            $this->jjmh->export();
 
 
             $this->bash->successfulMsg("A feltöltés sikeres!");   
@@ -163,14 +160,14 @@ class Controller
         {
 
             // Újságíró lekérése álnév alapján.
-            $this->jjmh->importByAlias($this->pdo, $this->input->oldAlias);
+            $this->jjmh->importByAlias($this->input->oldAlias);
 
 
             // Beletesszük a kapott adatokat a jjmh objektumba
             $this->pushDataToJjmh($this->input);
 
 
-            $this->jjmh->update($this->pdo, $this->input->oldAlias);
+            $this->jjmh->update($this->input->oldAlias);
 
 
             $this->bash->successfulMsg("A Módosítás sikeres!");
@@ -210,7 +207,7 @@ class Controller
         {
 
             // Újságíró lekérése azonosító alapján.
-            $journalist = $this->jjmh->importById($this->pdo, $this->input->id);
+            $journalist = $this->jjmh->importById($this->input->id);
 
 
             // prefix az új fájlnak. év, hó, nap, óra, perc, másodperc
@@ -269,7 +266,7 @@ class Controller
         {
 
             // Összes újságíró lekérése csoport alapján.
-            $journalists = $this->jjmh->importAll($this->pdo, $this->input->group);
+            $journalists = $this->jjmh->importAll($this->input->group);
 
             
             // A kapott tömböt json formátummá konvertálja 

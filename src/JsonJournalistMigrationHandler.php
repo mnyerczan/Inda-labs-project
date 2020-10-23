@@ -15,7 +15,16 @@ class JsonJournalistMigrationHandler
 
 
     private array   $journalists = [];
-    private int     $counter     = 0;    
+    private int     $counter     = 0; 
+    private PDO     $pdo;   
+
+
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
 
 
 
@@ -39,7 +48,6 @@ class JsonJournalistMigrationHandler
     /**
      * Újságíró importálása adatbázisból.
      * 
-     * @param PDO $pdo
      * @param int $id Az újságíró azonosítója
      * 
      * @return Journalist     
@@ -48,12 +56,12 @@ class JsonJournalistMigrationHandler
      *      
      */
 
-    public function importById(PDO $pdo, int $id): Journalist
+    public function importById(int $id): Journalist
     {
 
         $sql = "SELECT * FROM `Journalist` WHERE `id` = :id";
 
-        $smt = $pdo->prepare($sql);
+        $smt = $this->pdo->prepare($sql);
         $smt->bindValue(":id", $id);  
 
 
@@ -65,7 +73,6 @@ class JsonJournalistMigrationHandler
     /**
      * Újságíró importálása adatbázisból. 
      * 
-     * @param PDO $pdo
      * @param string $alias A keresett újságíró álnave
      * 
      * @return Journalist     
@@ -74,13 +81,13 @@ class JsonJournalistMigrationHandler
      *      
      */
 
-    public function importByAlias(PDO $pdo, string $alias): Journalist
+    public function importByAlias(string $alias): Journalist
     {
 
         $sql = "SELECT * FROM `Journalist` WHERE `alias` LIKE :alias";
 
 
-        $smt = $pdo->prepare($sql);
+        $smt = $this->pdo->prepare($sql);
 
         $smt->bindParam(":alias", $alias);        
 
@@ -130,22 +137,20 @@ class JsonJournalistMigrationHandler
     /**
      * Újságírók importálása adatbázisból.
      * 
-     * @param PDO $pdo
      * @param string $group
-     * 
      * @return array with Journalist objets
      * 
      * @throws PDOException
      *      
      */
 
-    public function importAll(PDO $pdo, ?string $group = null): array
+    public function importAll(?string $group = null): array
     {
 
         $returningArray = [];
 
         $sql = "SELECT * FROM `Journalist` WHERE `group` LIKE :group";
-        $smt = $pdo->prepare($sql);
+        $smt = $this->pdo->prepare($sql);
         $smt->bindValue(":group", $group);
             
         
@@ -178,50 +183,41 @@ class JsonJournalistMigrationHandler
     /**
      * Újságíró(k) exportálása adatbázisba.
      * 
-     * 
-     * @param PDO $pdo
-     *      
      * @throws PDOException  
      * 
      */
 
-    public function export(PDO $pdo)
+    public function export()
     {
 
-        $params = $this->createInsertStatement($pdo);
-        $smt    = $pdo->prepare($params->sql);
+        $params = $this->createInsertStatement();
+        $smt    = $this->pdo->prepare($params->sql);
 
         
         if (!$smt->execute($params->binds))
             throw new PDOException($smt->errorInfo()[2]);
 
-        
-        $this->journalists  = [];
-
-        $this->counter      = 0;
+        $this->pour();
 
     }
 
-    
 
 
 
     /**
      * Újságíró módosítása
      * 
-     * @param PDO $pdo
-     * 
      * @throws PDOException
      * 
      */
 
-    public function update(PDO $pdo, string $alias)
+    public function update(string $alias)
     {
 
         $sql = "UPDATE `Journalist` SET `name` = :name, `alias` = :alias, `group` = :group WHERE `alias` = :oldAlias";
 
 
-        $smt = $pdo->prepare($sql);
+        $smt = $this->pdo->prepare($sql);
 
 
         $binds = [
@@ -233,11 +229,27 @@ class JsonJournalistMigrationHandler
 
      
         $smt->execute($binds);
+
+        $this->pour();
         
     }
 
 
 
+
+    /**
+     * Az objektum belső állapotának 
+     * alaphelyzetbe állítása exportálás után.
+     * 
+     * 
+     */
+
+    private function pour()
+    {
+
+        $this->journalists  = [];
+        $this->counter      = 0;
+    }
 
 
 
