@@ -92,7 +92,7 @@ class BashHandler
 
     /**
      * 
-     * Az insert commandhoz tartozó elérési út bekérése és vaidálása. A felhasználónak 3 lehetősége van,
+     * Az import commandhoz tartozó elérési út bekérése és vaidálása. A felhasználónak 3 lehetősége van,
      * amit meg is jelenítünk neki.
      * 
      * @return string|false
@@ -237,7 +237,7 @@ class BashHandler
 
                             // Ha a kapott útvonal invalid,                             
                             return (object) [
-                                    "cmd" => "insert",
+                                    "cmd" => "import",
                                     "path"=> $this->getPath()
                                 ];
 

@@ -188,7 +188,7 @@ class JsonJournalistMigrationHandler
     public function export(PDO $pdo)
     {
 
-        $params = $this->createInsertStatement($pdo);
+        $params = $this->createImportStatement($pdo);
         $smt    = $pdo->prepare($params->sql);
 
         
@@ -247,7 +247,7 @@ class JsonJournalistMigrationHandler
      * 
      */
 
-    private function createInsertStatement(): object
+    private function createImportStatement(): object
     {   
 
         $binds  = [];  

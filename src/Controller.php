@@ -10,9 +10,9 @@ use Exception;
 use App\BashHandler;
 use App\Journalist;
 use App\JsonJournalistMigrationHandler as Migrate;
-use DomainException;
 use LengthException;
 use RuntimeException;
+
 
 class Controller
 {
@@ -33,13 +33,44 @@ class Controller
         $this->bash = bashHandler::getInstance();
 
 
-        $conn = json_decode(file_get_contents(".connect.json"));   
+        $dbConnect = ".dbConnect.json";
 
-        $this->pdo = new PDO(
-            "{$conn->sdn}:host={$conn->host};dbname={$conn->dbname};charset=utf8;",
-            $conn->user, 
-            $conn->password
-        );
+
+        $conn = json_decode(file_get_contents($dbConnect));   
+
+
+        try
+        {
+
+            // A PDO PDOException-t dob, ha a hibás paraméterek miatt nem képes megnyitni a 
+            // kacsolatot.
+            $this->pdo = new PDO(
+                "{$conn->sdn}:host={$conn->host};dbname={$conn->dbname};charset=utf8;",
+                $conn->user, 
+                $conn->password
+            );
+        }
+
+        catch (PDOException $e)
+        {
+
+            $this->bash->errorMsg($e->getMessage()."  =>  \"{$dbConnect}\"");
+            
+
+            if (!is_file($dbConnect))
+            {
+
+                file_put_contents(
+                    $dbConnect, 
+                    "{\n\t\"user\":\"\",\n\t\"password\":\"\",\n\t\"host\":\"\",\n\t\"sdn\":\"\",\n\t\"dbname\":\"\"\n}"
+                );
+            }
+                        
+
+            $this->bash = null;
+
+        }
+
     }
 
 
@@ -56,11 +87,11 @@ class Controller
             switch($this->input->cmd)
             {
 
-                case "insert":      $this->execInsert();      break;
-                case "update":      $this->execUpdate();      break;
-                case "select":      $this->execSelect();      break;
-                case "select-all":  $this->execSelectAll();   break;
-                case "exit":        $this->bash = null;             break;
+                case "import":      $this->execImport();    break;
+                case "update":      $this->execUpdate();    break;
+                case "select":      $this->execSelect();    break;
+                case "select-all":  $this->execSelectAll(); break;
+                case "exit":        $this->bash = null;     break;
             }                            
   
         }
@@ -70,14 +101,14 @@ class Controller
 
 
     /**
-     * Insert művelet végrehajtása külső Json fájlból. 
+     * Import művelet végrehajtása külső Json fájlból. 
      * A fájl csak egyetlen újságíró objektumot írhat le.     
      * 
      * 
      * @return void
      */
 
-    private function execInsert(): void
+    private function execImport(): void
     {
         
         try
