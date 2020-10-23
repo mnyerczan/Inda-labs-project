@@ -72,7 +72,7 @@ class Journalist
      * @return string Json format
      */
 
-    public function toJson()
+    public function toJson(): string
     {
         
         return "{\"id\" : \"{$this->id}\",\"name\" : \"{$this->name}\",\"alias\" : \"{$this->alias}\",\"group\" : \"{$this->group}\"}";
@@ -89,7 +89,7 @@ class Journalist
      * @throws InvalidArgumentException
      */
 
-     public static function assocToJson(array $journalists)
+     public static function assocToJson(array $journalists): string
      {            
 
         $json = "[";

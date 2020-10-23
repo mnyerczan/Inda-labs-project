@@ -1,11 +1,14 @@
 <?php
 
+
 namespace App;
+
 
 use PDO;
 use PDOStatement;
 use PDOException;
 use Exception;
+
 
 class JsonJournalistMigrationHandler
 {
@@ -23,7 +26,7 @@ class JsonJournalistMigrationHandler
      * 
      */
 
-    public function addJournalist(Journalist $journalist)
+    public function addJournalist(Journalist $journalist): int
     {
 
         $this->journalists[$this->counter++] = $journalist;
@@ -177,8 +180,6 @@ class JsonJournalistMigrationHandler
      * 
      * 
      * @param PDO $pdo
-     * 
-     * @return true ha a művelet sikeresen végre tud hajtódni.
      *      
      * @throws PDOException  
      * 
@@ -194,8 +195,6 @@ class JsonJournalistMigrationHandler
         if (!$smt->execute($params->binds))
             throw new PDOException($smt->errorInfo()[2]);
 
-    
-        return true;
     }
 
     
@@ -208,7 +207,6 @@ class JsonJournalistMigrationHandler
      * @param PDO $pdo
      * @param Journalist $journalist
      * 
-     * @return true ha a művelet sikeresen végrehajtódik
      * 
      * @throws PDOException
      * 
@@ -233,8 +231,6 @@ class JsonJournalistMigrationHandler
 
         if (!$smt->execute($binds))
             throw new PDOException($smt->errorInfo()[2]);
-
-        return true;
         
     }
 
@@ -251,7 +247,7 @@ class JsonJournalistMigrationHandler
      * 
      */
 
-    private function createInsertStatement()
+    private function createInsertStatement(): object
     {   
 
         $binds  = [];  

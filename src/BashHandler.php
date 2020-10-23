@@ -61,7 +61,7 @@ class BashHandler
      * 
      */
 
-    private function testCmd(string $cmd)
+    private function testCmd(string $cmd): void
     {
 
         if (in_array($cmd, $this->commands)) return;                       
@@ -100,7 +100,7 @@ class BashHandler
      * 
      */
 
-    private function getPath()
+    private function getPath(): string
     {
         
         // Bekérjük a kért útvonalat
@@ -137,7 +137,7 @@ class BashHandler
      * @throws InvalidArgumentException
      */
 
-    private function getId()
+    private function getId(): int
     {
 
         for ($i=0; $i < 3; $i++) 
