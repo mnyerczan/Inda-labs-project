@@ -75,7 +75,7 @@ class Journalist
     public function toJson(): string
     {
         
-        return "{\"id\" : \"{$this->id}\",\"name\" : \"{$this->name}\",\"alias\" : \"{$this->alias}\",\"group\" : \"{$this->group}\"}";
+        return "{\"id\":\"{$this->id}\",\"name\":\"{$this->name}\",\"alias\":\"{$this->alias}\",\"group\":\"{$this->group}\"}";
     }
 
 

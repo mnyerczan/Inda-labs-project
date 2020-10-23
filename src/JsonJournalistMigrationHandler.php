@@ -8,7 +8,7 @@ use PDO;
 use PDOStatement;
 use PDOException;
 use Exception;
-
+use LengthException;
 
 class JsonJournalistMigrationHandler
 {
@@ -98,7 +98,7 @@ class JsonJournalistMigrationHandler
      * 
      * @return Journalist     
      * 
-     * @throws  PDOException, Exception
+     * @throws  PDOException, LengthException
      *      
      */
 
@@ -110,7 +110,7 @@ class JsonJournalistMigrationHandler
         $journalist = $smt->fetch(PDO::FETCH_OBJ);
 
         if (!$journalist)
-            throw new Exception("Nincs ilyen újságíró.");
+            throw new LengthException("Nincs ilyen újságíró.");
 
         if ($smt->errorInfo()[0] != "00000")
             throw new PDOException($smt->errorInfo()[2]);

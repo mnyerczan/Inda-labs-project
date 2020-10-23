@@ -12,7 +12,7 @@ class BashHandler
 
 
     private $commands = [
-        "insert",
+        "import",
         "update",
         "select",
         "select-all",
@@ -203,8 +203,16 @@ class BashHandler
 
         while ($cmdIsCorrect === false)
         {
-
-            $this->msg("Kérlek válassz egyet az alábbi parancsok közül:\n[insert, update, select, select-all, exit]");
+            
+            $this->msg("Kérlek válassz egyet az alábbi parancsok közül:");
+            $this->newline();
+            $this->msg(" import\t\tBe tudsz tölteni json formátumú fájlból egy újságírót,");
+            $this->msg(" update\t\tAz újságíró adatait tudod módosítani álnevével való azonosításával,");
+            $this->msg(" select\t\tEgy újságíró adatait tudod kiíratni az azonosítója alapján,");
+            $this->msg(" select-all\tÚjságírók csoportját tudod kiíratni fájlba.");
+            $this->msg("\t\t- Ha nem adsz meg csoportnevet, az összes újságíró kiírásra kerül");
+            $this->msg(" exit\t\tKilépés a programból.");
+            $this->newline();
 
             $this->prompt();
 
@@ -224,7 +232,7 @@ class BashHandler
                 switch($cmd)
                 {
                                         
-                    case "insert": 
+                    case "import": 
                         {
 
                             // Ha a kapott útvonal invalid,                             
@@ -334,4 +342,8 @@ class BashHandler
 
     
     public function successfulMsg($msg) {echo "\e[42;30m{$msg}\e[0m\n";}
+
+
+    public function newline(){echo "\n";}
+
 }

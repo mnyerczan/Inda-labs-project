@@ -10,54 +10,56 @@ use Exception;
 use App\BashHandler;
 use App\Journalist;
 use App\JsonJournalistMigrationHandler as Migrate;
-
+use DomainException;
+use LengthException;
+use RuntimeException;
 
 class Controller
 {
 
     
-    private object       $conn;
+
     private Migrate      $jjmh;
     private ?BashHandler $bash;
     private PDO          $pdo;
+    private object       $input;
 
 
 
     public function __construct()
     {
-        
-        $this->conn = json_decode(file_get_contents(".connect.json"));        
+                     
         $this->jjmh = new Migrate();
+        $this->bash = bashHandler::getInstance();
+
+
+        $conn = json_decode(file_get_contents(".connect.json"));   
+
+        $this->pdo = new PDO(
+            "{$conn->sdn}:host={$conn->host};dbname={$conn->dbname};charset=utf8;",
+            $conn->user, 
+            $conn->password
+        );
     }
 
 
 
     public function index(): void
-    {                                
-       
-        $this->bash = bashHandler::getInstance();
-
-
-        $this->pdo = new PDO(
-            "{$this->conn->sdn}:host={$this->conn->host};dbname={$this->conn->dbname};charset=utf8;",
-            $this->conn->user, 
-            $this->conn->password
-        );
-        
+    {                                               
 
         while ($this->bash)
         {
 
-            $input = $this->bash->read();
+            $this->input = $this->bash->read();
    
 
-            switch($input->cmd)
+            switch($this->input->cmd)
             {
 
-                case "insert":      $this->execInsert($input);      break;
-                case "update":      $this->execUpdate($input);      break;
-                case "select":      $this->execSelect($input);      break;
-                case "select-all":  $this->execSelectAll($input);   break;
+                case "insert":      $this->execInsert();      break;
+                case "update":      $this->execUpdate();      break;
+                case "select":      $this->execSelect();      break;
+                case "select-all":  $this->execSelectAll();   break;
                 case "exit":        $this->bash = null;             break;
             }                            
   
@@ -69,49 +71,56 @@ class Controller
 
     /**
      * Insert művelet végrehajtása külső Json fájlból. 
-     * A fájl csak egyetlen újságíró objektumot írhat le.
+     * A fájl csak egyetlen újságíró objektumot írhat le.     
      * 
-     * @param object $input
      * 
      * @return void
      */
 
-    private function execInsert($input): void
+    private function execInsert(): void
     {
+        
+        try
+        {            
 
-        $source = json_decode(file_get_contents($input->path));
+            if (!$source = json_decode(file_get_contents($this->input->path)))
+                throw new RuntimeException("Csak Json formátumú fájlt adhatsz meg!");
 
 
-        if (is_array($source))
-        {
+            if (is_array($source))
+            {                
 
-            foreach($source as $journalist)
+                foreach($source as $journalist)
+                {
+
+                    $this->journalistValidator($journalist);
+
+
+                    $this->jjmh->addJournalist(
+                        new Journalist(
+                            $journalist->name,
+                            $journalist->alias,
+                            $journalist->group,
+                        )
+                    );
+                }
+            }
+            
+            else
             {
 
+                $this->journalistValidator($source);
+
+        
                 $this->jjmh->addJournalist(
                     new Journalist(
-                        $journalist->name,
-                        $journalist->alias,
-                        $journalist->group,
+                        $source->name,
+                        $source->alias,
+                        $source->group,                
                     )
                 );
             }
-        }
-        
-        else
-        {
-      
-            $this->jjmh->addJournalist(
-                new Journalist(
-                    $source->name,
-                    $source->alias,
-                    $source->group,                
-                )
-            );
-        }
 
-        try
-        {
 
             $this->jjmh->export($this->pdo);
             $this->bash->successfulMsg("A feltöltés sikeres!");
@@ -122,37 +131,83 @@ class Controller
         {
 
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
-        }                            
+        }           
+        
+        catch (RuntimeException $r)
+        {
+
+            $this->bash->errorMsg("Hiba: ".$r->getMessage());
+        }        
         
     }
+
+
+
+
+    /**
+     * Megvizsgáljuk, hogy a beérkező adatszerkezet újságíró kompatibilis-e.
+     * 
+     * 
+     * @throws RuntimeException
+     * 
+     */
+
+    private function journalistValidator($data)
+    {
+
+        if (gettype($data) == "object")
+        {
+
+            if (!(isset($data->name) && isset($data->name) && isset($data->name)))
+                throw new RuntimeException("Az adatszerkezet nem megfelelő formátumú.");
+            
+
+            return;
+        }
+        
+        
+        if (gettype($data) == "array")
+        {
+
+            if (!(isset($data["name"]) && isset($data["name"]) && isset($data["name"])))            
+                throw new RuntimeException("Az adatszerkezet nem megfelelő formátumú.");
+            
+            
+            return;
+        }            
+
+                
+        throw new RuntimeException("Az adatszerkezet nem megfelelő formátumú.");
+
+    }
+
 
 
 
     /**
      * A módosítást irányító eljárás.
      * 
-     * @param object $input
      * 
      * @return void
      */
 
-    private function execUpdate($input): void
+    private function execUpdate(): void
     {      
 
         try
         {
 
-            $this->jjmh->importByAlias($this->pdo, $input->alias);
+            $this->jjmh->importByAlias($this->pdo, $this->input->alias);
 
 
             $this->jjmh->update(
                 $this->pdo, 
                 new Journalist(                    
-                    $input->newName, 
-                    $input->newAlias, 
-                    $input->newGroup
+                    $this->input->newName, 
+                    $this->input->newAlias, 
+                    $this->input->newGroup
                 ),
-                $input->alias
+                $this->input->alias
             );
 
 
@@ -179,12 +234,11 @@ class Controller
     /**
      * Az egyes újságírók lekérdezését irányító eljárás.
      * 
-     * @param object $input
      * 
      * @return void
      */
 
-    private function execSelect($input): void
+    private function execSelect(): void
     {
 
         if(!is_dir("json")) mkdir("json");
@@ -193,7 +247,7 @@ class Controller
         try
         {
 
-            $journalist = $this->jjmh->importById($this->pdo, $input->id);
+            $journalist = $this->jjmh->importById($this->pdo, $this->input->id);
 
             $prefix = date("ymdHis", time());
 
@@ -217,9 +271,14 @@ class Controller
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
 
-        catch (Exception $e)
+        catch (LengthException $e)
         {
 
+            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        }
+
+        catch (Exception $e)
+        {
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
     }
@@ -230,12 +289,12 @@ class Controller
     /**
      * Az összes, vagy csoportos újságíri lekérdezéseket irányító eljárás.
      * 
-     * @param object $input
+     * @param object $this->input
      * 
      * @return void
      */
 
-    private function execSelectAll($input): void
+    private function execSelectAll(): void
     {
 
         if(!is_dir("json")) mkdir("json");
@@ -244,7 +303,7 @@ class Controller
         try 
         {
 
-            $journalists = $this->jjmh->importAll($this->pdo, $input->group);
+            $journalists = $this->jjmh->importAll($this->pdo, $this->input->group);
 
             
             $outputStr = Journalist::assocToJson($journalists);
@@ -268,6 +327,12 @@ class Controller
         } 
 
         catch (PDOException $e)
+        {
+
+            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        }
+
+        catch (LengthException $e)
         {
 
             $this->bash->errorMsg("Hiba: ".$e->getMessage());

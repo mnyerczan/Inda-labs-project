@@ -4,7 +4,7 @@
 use App\Controller;
 
 
-ini_set("error_reporting", "0");
+// ini_set("error_reporting", "0");
 
 
 require "src/BashHandler.php";
