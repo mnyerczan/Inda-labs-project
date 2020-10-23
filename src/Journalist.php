@@ -7,7 +7,9 @@
  * 
  */
 
+namespace App;
 
+use UnexpectedValueException;
 
 class Journalist
 {

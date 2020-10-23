@@ -1,17 +1,23 @@
 <?php
 
-require "Journalist.php";
-require "JsonJournalistMigrationHandler.php";
-require "BashHandler.php";
+namespace App;
+
+
+use PDO;
+use PDOException;
+use FFI\Exception;
+use App\BashHandler;
+use App\Journalist;
+use App\JsonJournalistMigrationHandler as Migrate;
 
 
 
-class Main
+class Controller
 {
 
     
     private object $conn;
-    private JsonJournalistMigrationHandler $jjmh;
+    private Migrate $jjmh;
     private ?BashHandler $bash;
     private PDO $pdo;
 
@@ -20,12 +26,12 @@ class Main
     public function __construct()
     {
         
-        $this->conn = json_decode(file_get_contents("connect.json"));
-        $this->jjmh = new JsonJournalistMigrationHandler();
+        $this->conn = json_decode(file_get_contents(".connect.json"));
+        $this->jjmh = new Migrate();
     }
 
 
-    public function index()
+    public function index(): void
     {                                
        
         $this->bash = bashHandler::getInstance();
@@ -89,6 +95,7 @@ class Main
                 );
             }
         }
+        
         else
         {
       
@@ -106,9 +113,9 @@ class Main
 
             $this->jjmh->export($this->pdo);
             $this->bash->successfulMsg("A feltöltés sikeres!");
-            
-            return true;
+   
         }
+
         catch (PDOException $e)
         {
 
@@ -146,15 +153,17 @@ class Main
                 $input->alias
             );
 
+
             $this->bash->successfulMsg("A Módosítás sikeres!");
 
-            return true;
-        }        
+        } 
+
         catch (PDOException $e)
         {
 
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
+
         catch (Exception $e)
         {
 
@@ -191,12 +200,15 @@ class Main
                 $this->bash->successfulMsg("Kiírva a  ".__DIR__."/json/{$rand}.json fájlba.");
             else 
                 throw new Exception("Jogosultság megtagadva az eredmény kiírásához");
+
         }
+
         catch (PDOException $e)
         {
 
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
+
         catch (Exception $e)
         {
 
@@ -252,13 +264,15 @@ class Main
                 $this->bash->successfulMsg("Kiírva a  ".__DIR__."/json/{$rand}.json fájlba.");
             else 
                 throw new Exception("Jogosultság megtagadva az eredmény kiírásához");
-
+                
         } 
+
         catch (PDOException $e)
         {
 
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
+
         catch (Exception $e)
         {
 
@@ -266,7 +280,3 @@ class Main
         }
     }
 }
-
-
-
-(new Main())->index();

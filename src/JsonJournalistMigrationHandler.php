@@ -1,6 +1,11 @@
 <?php
 
+namespace App;
 
+use PDO;
+use PDOStatement;
+use PDOException;
+use Exception;
 
 class JsonJournalistMigrationHandler
 {
