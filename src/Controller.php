@@ -49,6 +49,9 @@ class Controller
                 $conn->user, 
                 $conn->password
             );
+
+            
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
 
         catch (PDOException $e)
@@ -118,44 +121,15 @@ class Controller
                 throw new RuntimeException("Csak Json formátumú fájlt adhatsz meg!");
 
 
-            if (is_array($source))
-            {                
-
-                foreach($source as $journalist)
-                {
-
-                    $this->journalistValidator($journalist);
+            // Beletesszük a kapott adatokat a jjmh objektumba
+            $this->pushDataToJjmh($source);
 
 
-                    $this->jjmh->addJournalist(
-                        new Journalist(
-                            $journalist->name,
-                            $journalist->alias,
-                            $journalist->group,
-                        )
-                    );
-                }
-            }
-            
-            else
-            {
-
-                $this->journalistValidator($source);
-
-        
-                $this->jjmh->addJournalist(
-                    new Journalist(
-                        $source->name,
-                        $source->alias,
-                        $source->group,                
-                    )
-                );
-            }
-
-
+            // Újságírók exportálása az adatbázisba
             $this->jjmh->export($this->pdo);
-            $this->bash->successfulMsg("A feltöltés sikeres!");
-   
+
+
+            $this->bash->successfulMsg("A feltöltés sikeres!");   
         }
 
         catch (PDOException $e)
@@ -176,46 +150,6 @@ class Controller
 
 
     /**
-     * Megvizsgáljuk, hogy a beérkező adatszerkezet újságíró kompatibilis-e.
-     * 
-     * 
-     * @throws RuntimeException
-     * 
-     */
-
-    private function journalistValidator($data)
-    {
-
-        if (gettype($data) == "object")
-        {
-
-            if (!(isset($data->name) && isset($data->name) && isset($data->name)))
-                throw new RuntimeException("Az adatszerkezet nem megfelelő formátumú.");
-            
-
-            return;
-        }
-        
-        
-        if (gettype($data) == "array")
-        {
-
-            if (!(isset($data["name"]) && isset($data["name"]) && isset($data["name"])))            
-                throw new RuntimeException("Az adatszerkezet nem megfelelő formátumú.");
-            
-            
-            return;
-        }            
-
-                
-        throw new RuntimeException("Az adatszerkezet nem megfelelő formátumú.");
-
-    }
-
-
-
-
-    /**
      * A módosítást irányító eljárás.
      * 
      * 
@@ -228,18 +162,15 @@ class Controller
         try
         {
 
-            $this->jjmh->importByAlias($this->pdo, $this->input->alias);
+            // Újságíró lekérése álnév alapján.
+            $this->jjmh->importByAlias($this->pdo, $this->input->oldAlias);
 
 
-            $this->jjmh->update(
-                $this->pdo, 
-                new Journalist(                    
-                    $this->input->newName, 
-                    $this->input->newAlias, 
-                    $this->input->newGroup
-                ),
-                $this->input->alias
-            );
+            // Beletesszük a kapott adatokat a jjmh objektumba
+            $this->pushDataToJjmh($this->input);
+
+
+            $this->jjmh->update($this->pdo, $this->input->oldAlias);
 
 
             $this->bash->successfulMsg("A Módosítás sikeres!");
@@ -278,8 +209,11 @@ class Controller
         try
         {
 
+            // Újságíró lekérése azonosító alapján.
             $journalist = $this->jjmh->importById($this->pdo, $this->input->id);
 
+
+            // prefix az új fájlnak. év, hó, nap, óra, perc, másodperc
             $prefix = date("ymdHis", time());
 
 
@@ -334,13 +268,15 @@ class Controller
         try 
         {
 
+            // Összes újságíró lekérése csoport alapján.
             $journalists = $this->jjmh->importAll($this->pdo, $this->input->group);
 
             
+            // A kapott tömböt json formátummá konvertálja 
             $outputStr = Journalist::assocToJson($journalists);
 
 
-            // Refix a fájl prefixeléséhez.
+            // prefix az új fájlnak. év, hó, nap, óra, perc, másodperc
             $prefix = date("ymdHis", time());
 
 
@@ -375,5 +311,69 @@ class Controller
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
     }
+
     
+
+    /**
+     * Megvizsgáljuk, hogy a beérkező adatszerkezet újságíró kompatibilis-e.
+     * 
+     * @param object $data
+     * @throws RuntimeException
+     * 
+     */
+
+    private function journalistValidator(object $data)
+    {
+
+        if (!(isset($data->name) && isset($data->name) && isset($data->name)))
+                throw new RuntimeException("Az adatszerkezet nem megfelelő formátumú.");
+                    
+    }
+
+
+
+    /**
+     * Absztrakcó a kapott adatszerkezet jjmh felé átadáshoz.
+     * 
+     * @param mixed $data
+     * 
+     */
+
+     private function pushDataToJjmh($data)
+     {
+
+        if (is_array($data))
+        {                
+
+            foreach($data as $journalist)
+            {
+
+                $this->journalistValidator($journalist);
+
+
+                $this->jjmh->addJournalist(
+                    new Journalist(
+                        $journalist->name,
+                        $journalist->alias,
+                        $journalist->group,
+                    )
+                );
+            }
+        }
+        
+        else
+        {
+
+            $this->journalistValidator($data);
+
+    
+            $this->jjmh->addJournalist(
+                new Journalist(
+                    $data->name,
+                    $data->alias,
+                    $data->group,                
+                )
+            );
+        }        
+     }
 }

@@ -188,12 +188,17 @@ class JsonJournalistMigrationHandler
     public function export(PDO $pdo)
     {
 
-        $params = $this->createImportStatement($pdo);
+        $params = $this->createInsertStatement($pdo);
         $smt    = $pdo->prepare($params->sql);
 
         
         if (!$smt->execute($params->binds))
             throw new PDOException($smt->errorInfo()[2]);
+
+        
+        $this->journalists  = [];
+
+        $this->counter      = 0;
 
     }
 
@@ -205,32 +210,29 @@ class JsonJournalistMigrationHandler
      * Újságíró módosítása
      * 
      * @param PDO $pdo
-     * @param Journalist $journalist
-     * 
      * 
      * @throws PDOException
      * 
      */
 
-    public function update(PDO $pdo, Journalist $journalist, string $alias)
+    public function update(PDO $pdo, string $alias)
     {
 
-        $sql = "UPDATE `Journalist` SET `name` = :newName, `alias` = :newAlias, `group` = :newGroup WHERE `alias` = :alias";
+        $sql = "UPDATE `Journalist` SET `name` = :name, `alias` = :alias, `group` = :group WHERE `alias` = :oldAlias";
 
 
         $smt = $pdo->prepare($sql);
 
 
         $binds = [
-            ":alias" => $alias,
-            ":newName"  => $journalist->name,
-            ":newAlias" => $journalist->alias,
-            ":newGroup" => $journalist->group
+            ":oldAlias" => $alias,
+            ":name"  => $this->journalists[0]->name,
+            ":alias" => $this->journalists[0]->alias,
+            ":group" => $this->journalists[0]->group
         ];
 
-
-        if (!$smt->execute($binds))
-            throw new PDOException($smt->errorInfo()[2]);
+     
+        $smt->execute($binds);
         
     }
 
@@ -247,7 +249,7 @@ class JsonJournalistMigrationHandler
      * 
      */
 
-    private function createImportStatement(): object
+    private function createInsertStatement(): object
     {   
 
         $binds  = [];  

@@ -258,7 +258,7 @@ class BashHandler
                             $this->prompt();
 
 
-                            $output["alias"] = readline(); 
+                            $output["oldAlias"] = readline(); 
 
 
                             // Bekérjük az újságíró új adatait
@@ -268,7 +268,7 @@ class BashHandler
                             $this->prompt();
 
 
-                            $output["newName"] = readline();
+                            $output["name"] = readline();
                             
                             
                             // alias
@@ -277,7 +277,7 @@ class BashHandler
                             $this->prompt();
 
 
-                            $output["newAlias"] = readline();   
+                            $output["alias"] = readline();   
 
 
                             // csoport
@@ -286,7 +286,7 @@ class BashHandler
                             $this->prompt();
 
                             
-                            $output["newGroup"] = readline();   
+                            $output["group"] = readline();   
                             
 
                             return (object)$output;
