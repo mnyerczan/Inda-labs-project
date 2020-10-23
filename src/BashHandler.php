@@ -1,7 +1,10 @@
 <?php
 
+
 namespace App;
 
+
+use InvalidArgumentException;
 
 
 class BashHandler
@@ -51,35 +54,17 @@ class BashHandler
 
 
     /**
-     * Segéd függvények a kiiratásokhoz.
-     * 
-     */
-
-    public function prompt(){           echo "\e[1;32m$ \e[0m";}
-    public function errorMsg($msg){     echo "\e[1;31m{$msg}\e[0m\n";}
-    public function msg($msg){          echo "{$msg}\n";}
-    public function successfulMsg($msg){echo "\e[42;30m{$msg}\e[0m\n";}
-    
-
-
-
-
-
-    /**
      * Parancs ellenőrzése és esetleges segítség nyújtása
      * 
      * @param string $cmd 
-     * 
-     * @return true|false
+     * @throws InvalidArgumentException
      * 
      */
 
-    private function testCmd(string $cmd): bool
+    private function testCmd(string $cmd)
     {
 
-
-        if (in_array($cmd, $this->commands))        
-            return true;                       
+        if (in_array($cmd, $this->commands)) return;                       
 
     
         if (preg_match("%{$cmd}%" ,$this->commands[0]))  
@@ -98,7 +83,8 @@ class BashHandler
             $this->errorMsg("Nem létező parancs: \"$cmd\"");
         
         
-        return false;
+        throw new InvalidArgumentException();
+
     }
 
 
@@ -110,14 +96,16 @@ class BashHandler
      * amit meg is jelenítünk neki.
      * 
      * @return string|false
+     * @throws InvalidArgumentException
      * 
      */
 
-    private function getPath(): string
+    private function getPath()
     {
         
         // Bekérjük a kért útvonalat
         $this->msg("Kérem az elérendő fájl útvonalát, vagy nevét, ha ebben a mappában van: ".__DIR__);
+
 
         for ($i=0; $i < 3; $i++) 
         { 
@@ -137,14 +125,16 @@ class BashHandler
         }          
 
 
-        return false;
+        throw new InvalidArgumentException();
     }
         
+
 
     /**
      * Azonosító bekérése a felhasználótól.
      * 
-     * @return int|false
+     * @return int|false        
+     * @throws InvalidArgumentException
      */
 
     private function getId()
@@ -168,7 +158,7 @@ class BashHandler
                 
         }    
         
-        return false;
+        throw new InvalidArgumentException();
     }
 
 
@@ -179,10 +169,10 @@ class BashHandler
      * @return string 
      */
 
-    private function getGroup()
+    private function getGroup(): string
     {                
 
-        $this->msg("Kérlek adj meg a szűréshez egy csoportot!");
+        $this->msg("Kérlek adj meg a szűréshez egy csoportot!");        
         $this->msg("Ha csak nyomsz egy entert, a szűrés minden újságírót ki fog listázni");
 
         $this->prompt();
@@ -224,12 +214,12 @@ class BashHandler
             $cmd = explode(" ",strtolower(readline()))[0];
 
 
-            // Megvizsgáljuk, hogy a command valid-e.
-            $cmdIsCorrect = $this->testCmd($cmd);
-            
+            try
+            {
 
-            if ($cmdIsCorrect)
-            {   
+                // Megvizsgáljuk, hogy a command valid-e.
+                $this->testCmd($cmd);
+
 
                 switch($cmd)
                 {
@@ -237,21 +227,22 @@ class BashHandler
                     case "insert": 
                         {
 
-                            // Ha a kapott útvonal invalid, 
-                            if( !$path = $this->getPath())
-                                $cmdIsCorrect = false; 
-                                
-                            else
-                                return (object)[
+                            // Ha a kapott útvonal invalid,                             
+                            return (object) [
                                     "cmd" => "insert",
-                                    "path"=> $path
+                                    "path"=> $this->getPath()
                                 ];
 
-                        } break;
+                        }
 
 
                     case "update": 
                         {
+
+                            $output = [];
+
+                            $output["cmd"] = "update";
+
 
                             // Bekérjük a az újságíró jelenlegi alias-át
                             $this->msg("Kérem az újságíró jelenlegi álnevét!");
@@ -259,7 +250,7 @@ class BashHandler
                             $this->prompt();
 
 
-                            $alias = readline(); 
+                            $output["alias"] = readline(); 
 
 
                             // Bekérjük az újságíró új adatait
@@ -269,7 +260,7 @@ class BashHandler
                             $this->prompt();
 
 
-                            $newName = readline();
+                            $output["newName"] = readline();
                             
                             
                             // alias
@@ -278,7 +269,7 @@ class BashHandler
                             $this->prompt();
 
 
-                            $newAlias = readline();   
+                            $output["newAlias"] = readline();   
 
 
                             // csoport
@@ -287,40 +278,60 @@ class BashHandler
                             $this->prompt();
 
                             
-                            $newGroup = readline();   
+                            $output["newGroup"] = readline();   
                             
 
-                            return (object)[
-                                "cmd"       => "update",
-                                "alias"     => $alias,
-                                "newName"   => $newName,
-                                "newAlias"  => $newAlias,
-                                "newGroup"  => $newGroup,
-                            ];  
+                            return (object)$output;
 
-                        } break;
+                        }
 
                     
                     case "select":  
-                            return (object)[
+                            return (object) [
                                     "cmd" => "select",
                                     "id"=> $this->getId()
-                            ]; break;
+                            ];
 
 
                     case "select-all": 
-                            return (object)[
+                            return (object) [
                                 "cmd"   => "select-all",
                                 "group" => $this->getGroup()
                             ]; 
 
 
                     case "exit": 
-                            return (object)[
+                            return (object) [
                                 "cmd" => $cmd
                             ];
+
                 }                          
+
             }
+
+            catch (InvalidArgumentException $e){}
+            
         }        
     }
+
+
+
+    /**
+     * Segéd függvények a kiiratásokhoz.
+     * 
+     */
+
+    public function prompt() {echo "\e[1;32m$ \e[0m";}
+
+
+
+    public function errorMsg($msg) {echo "\e[1;31m{$msg}\e[0m\n";}
+    
+
+
+    public function msg($msg) {echo "{$msg}\n";}
+    
+
+    
+    public function successfulMsg($msg) {echo "\e[42;30m{$msg}\e[0m\n";}
 }

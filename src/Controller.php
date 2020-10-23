@@ -1,40 +1,42 @@
 <?php
 
+
 namespace App;
 
 
 use PDO;
 use PDOException;
-use FFI\Exception;
+use Exception;
 use App\BashHandler;
 use App\Journalist;
 use App\JsonJournalistMigrationHandler as Migrate;
-
 
 
 class Controller
 {
 
     
-    private object $conn;
-    private Migrate $jjmh;
+    private object       $conn;
+    private Migrate      $jjmh;
     private ?BashHandler $bash;
-    private PDO $pdo;
+    private PDO          $pdo;
 
 
 
     public function __construct()
     {
         
-        $this->conn = json_decode(file_get_contents(".connect.json"));
+        $this->conn = json_decode(file_get_contents(".connect.json"));        
         $this->jjmh = new Migrate();
     }
+
 
 
     public function index(): void
     {                                
        
         $this->bash = bashHandler::getInstance();
+
 
         $this->pdo = new PDO(
             "{$this->conn->sdn}:host={$this->conn->host};dbname={$this->conn->dbname};charset=utf8;",
@@ -185,21 +187,27 @@ class Controller
     private function execSelect($input): void
     {
 
-        if(!is_dir("json"))
-            mkdir("json");
+        if(!is_dir("json")) mkdir("json");
+
 
         try
         {
 
             $journalist = $this->jjmh->importById($this->pdo, $input->id);
 
-            $rand = random_int(1000000, 10000000);
+            $prefix = date("ymdHis", time());
 
 
-            if(file_put_contents("json/".$rand.".json", $journalist->toJson()))
-                $this->bash->successfulMsg("Kiírva a  ".__DIR__."/json/{$rand}.json fájlba.");
+            // Ha a PHP Warning funkció nincs kikapcsolva az .ini-ben, kiírja a
+            // hibát és a verem hivásokat az elsődleges kimenetre...
+            //
+            // Program.php(7)
+            //
+            if(file_put_contents("json/".$prefix.".json", $journalist->toJson()))
+                $this->bash->successfulMsg("Kiírva a  ".__DIR__."/json/{$prefix}.json fájlba.");
+
             else 
-                throw new Exception("Jogosultság megtagadva az eredmény kiírásához");
+                throw new Exception("Jogosultság megtagadva: ".(get_current_user()));
 
         }
 
@@ -230,40 +238,32 @@ class Controller
     private function execSelectAll($input): void
     {
 
-        if(!is_dir("json"))
-            mkdir("json");
+        if(!is_dir("json")) mkdir("json");
+
 
         try 
         {
 
             $journalists = $this->jjmh->importAll($this->pdo, $input->group);
 
-
             
-            $outputStr = "[";
-            for($i = 0; $i < count($journalists);)
-            {     
-
-                $outputStr.= $journalists[$i]->toJson();
+            $outputStr = Journalist::assocToJson($journalists);
 
 
-                // Amíg nem érünk a tömm utolsó eleméhez, kitesszük a vesszőt az
-                // objektumok közé.
-                if ($i++ < count($journalists) -1) 
-                    $outputStr.=",";
-                    
-            }
-            $outputStr .= "]";
+            // Refix a fájl prefixeléséhez.
+            $prefix = date("ymdHis", time());
 
 
-            // Randomszám a fájl prefixeléséhez.
-            $rand = random_int(1000000, 10000000);
-
-
-            if(file_put_contents("json/".$rand.".json", $outputStr))
-                $this->bash->successfulMsg("Kiírva a  ".__DIR__."/json/{$rand}.json fájlba.");
+            // Ha a PHP Warning funkció nincs kikapcsolva az .ini-ben, kiírja a
+            // hibát és a verem hivásokat az elsődleges kimenetre...
+            //
+            // Program.php(7)
+            //
+            if( file_put_contents("json/".$prefix.".json", $outputStr))
+                $this->bash->successfulMsg("Kiírva a  ".__DIR__."/json/{$prefix}.json fájlba.");
+                
             else 
-                throw new Exception("Jogosultság megtagadva az eredmény kiírásához");
+                throw new Exception("Jogosultság megtagadva: ".(get_current_user()));
                 
         } 
 
@@ -279,4 +279,5 @@ class Controller
             $this->bash->errorMsg("Hiba: ".$e->getMessage());
         }
     }
+    
 }

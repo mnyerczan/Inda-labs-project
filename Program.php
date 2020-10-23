@@ -4,6 +4,8 @@
 use App\Controller;
 
 
+ini_set("error_reporting", "0");
+
 
 require "src/BashHandler.php";
 require "src/Journalist.php";

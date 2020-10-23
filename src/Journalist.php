@@ -9,7 +9,10 @@
 
 namespace App;
 
+
+use InvalidArgumentException;
 use UnexpectedValueException;
+
 
 class Journalist
 {
@@ -76,4 +79,42 @@ class Journalist
     }
 
 
+
+    /**
+     * Staticus függvény Újságírókat tartalmazó tömb
+     * Json formátummá konvertálásához.
+     * 
+     * @param array   $journalists Array of Journalists
+     * @return string
+     * @throws InvalidArgumentException
+     */
+
+     public static function assocToJson(array $journalists)
+     {            
+
+        $json = "[";
+
+
+        for($i = 0; $i < count($journalists);)
+        {     
+
+            if (get_class($journalists[$i]) !== "App\Journalist")
+                throw new InvalidArgumentException("You can only convert an array of journalists!");
+
+            $json.= $journalists[$i]->toJson();
+
+
+            // Amíg nem érünk a tömm utolsó eleméhez, kitesszük a vesszőt az
+            // objektumok közé.
+            if ($i++ < count($journalists) -1) 
+                $json.=",";
+                
+        }
+
+
+        $json .= "]";
+
+
+        return $json;
+    }
 }

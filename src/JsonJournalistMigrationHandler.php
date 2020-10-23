@@ -110,7 +110,7 @@ class JsonJournalistMigrationHandler
             throw new Exception("Nincs ilyen újságíró.");
 
         if ($smt->errorInfo()[0] != "00000")
-            throw new Exception($smt->errorInfo()[2]);
+            throw new PDOException($smt->errorInfo()[2]);
 
 
         return new Journalist(
