@@ -1,28 +1,13 @@
 <?php
 
-
-namespace App;
-
+namespace App\Console;
 
 use InvalidArgumentException;
 
-
 class BashHandler
 {
-
-
-    private $commands = [
-        "import",
-        "update",
-        "select",
-        "select-all",
-        "exit"
-    ];
-
     private static ?BashHandler $instance = null;
-
-
-
+    private object $languageContainer;
 
     /**
      * Egyetlen példány lehet az osztályból a program életciklusa során.
@@ -30,28 +15,39 @@ class BashHandler
      * @return BashHandler
      * 
      */
-
-    public static function getInstance(): BashHandler
+    public static function getInstance($langguageFilePath): BashHandler
     {
-
         if (self::$instance) 
-            return self::$instance;
-        
+            return self::$instance;        
 
-        return self::$instance = new BashHandler();
+        return self::$instance = new BashHandler($langguageFilePath);
     }
 
-
-
-
-    private function __construct()
+    public function __get($name)
     {
-
-        $this->msg("Házi feladat");
+        if ($name == "languageContainer")
+            return $this->languageContainer;
     }
 
+    /**
+     * BashHandler constructor.
+     * @param $langguageFilePath
+     *
+     */
+    private function __construct($langguageFilePath)
+    {
+        $this->languageContainer = new LanguageContener($langguageFilePath);
 
+        $this->msg($this->languageContainer->languageSetUp["getLanguage"]);
 
+        foreach ($this->languageContainer->languages as $language)
+            $this->msg(" - ".$language);
+
+        $this->prompt();
+        $this->languageContainer->setUp(readline());
+        // $this->languageContainer->setUp();
+
+    }
 
     /**
      * Parancs ellenőrzése és esetleges segítség nyújtása
@@ -60,35 +56,43 @@ class BashHandler
      * @throws InvalidArgumentException
      * 
      */
-
     private function testCmd(string $cmd): void
     {
+        foreach($this->languageContainer->commands as $type) {
+            if ($cmd == $type->command) return;
+        }
 
-        if (in_array($cmd, $this->commands)) return;                       
-
-    
-        if (preg_match("%{$cmd}%" ,$this->commands[0]))  
-            $this->errorMsg("Rossz parancs! Talán erre gondoltál: \"{$this->commands[0]}\"");
-
-        elseif (preg_match("%{$cmd}%" ,$this->commands[1]))  
-            $this->errorMsg("Rossz parancs! Talán erre gondoltál: \"{$this->commands[1]}\"");
-
-        elseif (preg_match("%{$cmd}%" ,$this->commands[2]))  
-            $this->errorMsg("Rossz parancs! Talán erre gondoltál: \"{$this->commands[2]}\", \"{$this->commands[2]}\"");
-
-        elseif (preg_match("%{$cmd}%" , "-all"))
-            $this->errorMsg("Rossz parancs! Talán erre gondoltál: \"{$this->commands[3]}\"");
-
+        if (preg_match("%{$cmd}%", $this->languageContainer->import->command))
+            $this->errorMsg(
+                $this->languageContainer->main->help."\"".
+                $this->languageContainer->import->command."\""
+            );
+        elseif (preg_match("%{$cmd}%", $this->languageContainer->update->command))
+            $this->errorMsg(
+                $this->languageContainer->main->help."\"".
+                $this->languageContainer->import->command."\""
+            );
+        elseif (preg_match("%{$cmd}%", $this->languageContainer->select->command))
+            $this->errorMsg(
+                $this->languageContainer->main->help."\"".
+                $this->languageContainer->select->command."\"".
+                $this->languageContainer->selectAll->command."\""
+            );
+        elseif (preg_match("%{$cmd}%", "-all"))
+            $this->errorMsg(
+                $this->languageContainer->main->help."\", \"".
+                $this->languageContainer->selectAll->command."\""
+            );
+        elseif (preg_match("%{$cmd}%", $this->languageContainer->exit->command))
+            $this->errorMsg(
+                $this->languageContainer->main->help."\"".
+                $this->languageContainer->exit->command."\""
+            );
         else 
-            $this->errorMsg("Nem létező parancs: \"$cmd\"");
-        
-        
+            $this->errorMsg($this->languageContainer->main->wrong."\"".$cmd."\"");
+
         throw new InvalidArgumentException();
-
     }
-
-
-
 
     /**
      * 
@@ -99,36 +103,22 @@ class BashHandler
      * @throws InvalidArgumentException
      * 
      */
-
     private function getPath(): string
     {
-        
         // Bekérjük a kért útvonalat
-        $this->msg("Kérem az elérendő fájl útvonalát, vagy nevét, ha ebben a mappában van: ".__DIR__);
+        $this->msg($this->languageContainer->import->get->path.__DIR__);
 
-
-        for ($i=0; $i < 3; $i++) 
-        { 
-
+        for ($i=0; $i < 3; $i++) {
             $this->prompt();
-
-
             $path = strtolower(readline());            
-
 
             // Majd leteszteljük               
             if (is_file($path)) return $path; 
 
-
-            $this->errorMsg("Érvénytelen útvonal: \"{$path}\". Hátralévő próbálkozások száma: ".(2 - $i));
-
-        }          
-
-
+            $this->errorMsg($this->languageContainer->main->remainingAttempts.(2 - $i));
+        }
         throw new InvalidArgumentException();
     }
-        
-
 
     /**
      * Azonosító bekérése a felhasználótól.
@@ -136,212 +126,151 @@ class BashHandler
      * @return int|false        
      * @throws InvalidArgumentException
      */
-
     private function getId(): int
     {
-
-        for ($i=0; $i < 3; $i++) 
-        { 
-
-            $this->msg("Kérlek add meg a keresett újságíró azonosítóját!");
-
+        for ($i=0; $i < 3; $i++) {
+            $this->msg($this->languageContainer->select->get->id);
             $this->prompt();
-
 
             $id = readline();
 
-
             if (!is_numeric($id))
-                $this->errorMsg("Kérlek számot adj meg: \"{$id}\". Hátralévő próbálkozások száma: ".(2 - $i));
+                $this->errorMsg($this->languageContainer->select->get->wrong.(2 - $i));
             else 
-                return $id;
-                
-        }    
-        
+                return $id;                
+        }            
         throw new InvalidArgumentException();
     }
-
-
 
     /**
      * Csoport nevének bekérése. 
      * 
      * @return string 
      */
-
     private function getGroup(): string
     {                
-
-        $this->msg("Kérlek adj meg a szűréshez egy csoportot!");        
-        $this->msg("Ha csak nyomsz egy entert, a szűrés minden újságírót ki fog listázni");
-
+        $this->msg($this->languageContainer->selectAll->get->group);
         $this->prompt();
-   
-
         $group = readline();
-
 
         // A readline ures stringet ad vissza,nem NULL értéket, ezért
         // nem használható a Null Coalescing operátor (??)
         return  $group == "" ? "%" : $group;
     }
 
-
-
     /**
      * Felhasználói interakciót menedzselő függvény. Visszaadja a kapott paramétereket, ha azok helyesek.
      * 
-     * @return array Array of cmd commands
+     * @return object Object of cmd commands
      * 
      */
-    
     public function read(): object
     {
-
         $cmdIsCorrect = false;
-
 
         while ($cmdIsCorrect === false)
         {
-            
-            $this->msg("Kérlek válassz egyet az alábbi parancsok közül:");
+            $this->msg($this->languageContainer->main->describe);
             $this->msg();
-            $this->msg(" import\t\tBe tudsz tölteni json formátumú fájlból egy újságírót,");
-            $this->msg(" update\t\tAz újságíró adatait tudod módosítani álnevével való azonosításával,");
-            $this->msg(" select\t\tEgy újságíró adatait tudod kiíratni az azonosítója alapján,");
-            $this->msg(" select-all\tÚjságírók csoportját tudod kiíratni fájlba.");
-            $this->msg("\t\t- Ha nem adsz meg csoportnevet, az összes újságíró kiírásra kerül");
-            $this->msg(" exit\t\tKilépés a programból.");
+            $this->msg($this->languageContainer->import->message);
+            $this->msg($this->languageContainer->update->message);
+            $this->msg($this->languageContainer->select->message);
+            $this->msg($this->languageContainer->selectAll->message);
+            $this->msg($this->languageContainer->exit->message);
             $this->msg();
-
             $this->prompt();
-
 
             // Lehet, hogy a felhasználó ütött a bemeneti karakterláncba szóközt.
             // Ezért megpróbáljuk felbontani ezek mentén és csak az első elemet vizsgáljuk.
             $cmd = explode(" ",strtolower(readline()))[0];
-
-
-            try
-            {
-
+            // $cmd = "import" ;
+            try {
                 // Megvizsgáljuk, hogy a command valid-e.
                 $this->testCmd($cmd);
 
-
                 switch($cmd)
-                {
-                                        
-                    case "import": 
-                        {
-
+                {                                        
+                    case $this->languageContainer->import->command:{
                             // Ha a kapott útvonal invalid,                             
                             return (object) [
                                     "cmd" => "import",
                                     "path"=> $this->getPath()
                                 ];
-
                         }
 
-
-                    case "update": 
-                        {
-
+                    case $this->languageContainer->update->command:{
                             $output = [];
-
                             $output["cmd"] = "update";
 
-
                             // Bekérjük a az újságíró jelenlegi alias-át
-                            $this->msg("Kérem az újságíró jelenlegi álnevét!");
-
+                            $this->msg($this->languageContainer->update->get->newAlias);
                             $this->prompt();
-
-
-                            $output["oldAlias"] = readline(); 
-
+                            $output["oldAlias"] = readline();
 
                             // Bekérjük az újságíró új adatait
                             // név
-                            $this->msg("Kérem az újságíró új nevét!");
-
+                            $this->msg($this->languageContainer->update->get->name);
                             $this->prompt();
-
-
                             $output["name"] = readline();
-                            
-                            
+
                             // alias
-                            $this->msg("Kérem az újságíró új álnevét!");
-
+                            $this->msg($this->languageContaine->update->get->alias);
                             $this->prompt();
-
-
                             $output["alias"] = readline();   
 
-
                             // csoport
-                            $this->msg("Kérem az újságíró új csoportját!");
-
-                            $this->prompt();
-
-                            
+                            $this->msg($this->languageContainer->update->get->group);
+                            $this->prompt();                            
                             $output["group"] = readline();   
                             
-
                             return (object)$output;
-
                         }
 
-                    
-                    case "select":  
+                    case $this->languageContainer->select->command:
                             return (object) [
                                     "cmd" => "select",
                                     "id"=> $this->getId()
                             ];
 
-
-                    case "select-all": 
+                    case $this->languageContainer->selectAll->command:
                             return (object) [
                                 "cmd"   => "select-all",
                                 "group" => $this->getGroup()
-                            ]; 
+                            ];
 
-
-                    case "exit": 
+                    case $this->languageContainer->exit->command:
                             return (object) [
                                 "cmd" => $cmd
                             ];
-
-                }                          
-
+                }
             }
-
-            catch (InvalidArgumentException $e){}
-            
+            catch (InvalidArgumentException $e){}            
         }        
     }
-
-
 
     /**
      * Segéd függvények a kiiratásokhoz.
      * 
      */
+    public function prompt()
+    {
+        echo "\e[1;32m$ \e[0m";
+    }
 
-    public function prompt() {echo "\e[1;32m$ \e[0m";}
+    public function errorMsg($msg)
+    {
+        echo "\e[1;31m{$msg}\e[0m\n";
+    }
 
+    public function msg($msg = "")
+    {
+        echo "{$msg}\n";
+    }
 
-
-    public function errorMsg($msg) {echo "\e[1;31m{$msg}\e[0m\n";}
-    
-
-
-    public function msg($msg = "") {echo "{$msg}\n";}
-    
-
-    
-    public function successfulMsg($msg) {echo "\e[42;30m{$msg}\e[0m\n";}
+    public function successfulMsg($msg)
+    {
+        echo "\e[42;30m{$msg}\e[0m\n";
+    }
 
 
 }

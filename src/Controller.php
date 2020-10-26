@@ -7,38 +7,28 @@ namespace App;
 use PDO;
 use PDOException;
 use Exception;
-use App\BashHandler;
-use App\Journalist;
+use App\Console\BashHandler;
 use App\JsonJournalistMigrationHandler as Migrate;
 use LengthException;
 use RuntimeException;
 
 
 class Controller
-{
-
-    
-
+{    
     private Migrate      $jjmh;
     private ?BashHandler $bash; 
     private object       $input;
 
-
-
-    public function __construct()
+    /**
+     * Controller constructor.
+     * @param string $languageFileName
+     */
+    public function __construct(string $langguageFilePath, string $dbConnectFileName)
     {
-                       
-        $this->bash = bashHandler::getInstance();
+        $this->bash = BashHandler::getInstance($langguageFilePath);
+        $conn = json_decode(file_get_contents($dbConnectFileName));
 
-
-        $dbConnect = ".dbConnect.json";
-
-        $conn = json_decode(file_get_contents($dbConnect));   
-
-
-        try
-        {
-
+        try {
             // A PDO PDOException-t dob, ha a hibás paraméterek miatt nem képes megnyitni a 
             // kacsolatot.
             $pdo = new PDO(
@@ -46,59 +36,38 @@ class Controller
                 $conn->user, 
                 $conn->password
             );
-
-
             $this->jjmh = new Migrate($pdo);
         }
+        catch (PDOException $e) {
+            $this->bash->errorMsg($e->getMessage()."  =>  \"{$dbConnectFileName}\"");
 
-        catch (PDOException $e)
-        {
-
-            $this->bash->errorMsg($e->getMessage()."  =>  \"{$dbConnect}\"");
-            
-
-            if (!is_file($dbConnect))
-            {
-
+            if (!is_file($dbConnectFileName)) {
                 file_put_contents(
-                    $dbConnect, 
+                    $dbConnectFileName,
                     "{\n\t\"user\":\"\",\n\t\"password\":\"\",\n\t\"host\":\"\",\n\t\"sdn\":\"\",\n\t\"dbname\":\"\"\n}"
                 );
-            }
-                        
-
+            }                        
             $this->bash = null;
-
         }
-
     }
 
-
-
+    /**
+     * 
+     */
     public function index(): void
     {                                               
-
-        while ($this->bash)
-        {
-
+        while ($this->bash) {
             $this->input = $this->bash->read();
-   
 
-            switch($this->input->cmd)
-            {
-
+            switch($this->input->cmd) {
                 case "import":      $this->execImport();    break;
                 case "update":      $this->execUpdate();    break;
                 case "select":      $this->execSelect();    break;
                 case "select-all":  $this->execSelectAll(); break;
                 case "exit":        $this->bash = null;     break;
-            }                            
-  
+            }
         }
-
     }
-
-
 
     /**
      * Import művelet végrehajtása külső Json fájlból. 
@@ -109,42 +78,25 @@ class Controller
      */
 
     private function execImport(): void
-    {
-        
-        try
-        {            
-
+    {        
+        try {
             if (!$source = json_decode(file_get_contents($this->input->path)))
-                throw new RuntimeException("Csak Json formátumú fájlt adhatsz meg!");
-
+                throw new RuntimeException($this->bash->languageContainer->io->file->wrongMimeType);
 
             // Beletesszük a kapott adatokat a jjmh objektumba
             $this->pushDataToJjmh($source);
 
-
             // Újságírók exportálása az adatbázisba
             $this->jjmh->export();
-
-
-            $this->bash->successfulMsg("A feltöltés sikeres!");   
+            $this->bash->successfulMsg($this->bash->languageContainer->import->success);
         }
-
-        catch (PDOException $e)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
-        }           
-        
-        catch (RuntimeException $r)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$r->getMessage());
-        }        
-        
+        catch (PDOException $e) {
+            $this->bash->errorMsg($e->getMessage());
+        }
+        catch (RuntimeException $r) {
+            $this->bash->errorMsg($r->getMessage());
+        }
     }
-
-
-
 
     /**
      * A módosítást irányító eljárás.
@@ -152,43 +104,27 @@ class Controller
      * 
      * @return void
      */
-
     private function execUpdate(): void
-    {      
-
-        try
-        {
-
+    {
+        try {
             // Újságíró lekérése álnév alapján.
             $this->jjmh->importByAlias($this->input->oldAlias);
 
-
             // Beletesszük a kapott adatokat a jjmh objektumba
             $this->pushDataToJjmh($this->input);
-
-
             $this->jjmh->update($this->input->oldAlias);
-
-
-            $this->bash->successfulMsg("A Módosítás sikeres!");
-
-        } 
-
-        catch (PDOException $e)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+            $this->bash->successfulMsg($this->bash->languageContainer->update->success);
         }
-
-        catch (Exception $e)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        catch (PDOException $e) {
+            $this->bash->errorMsg($e->getMessage());
         }
-    
+        catch (LengthException $e) {
+            $this->bash->errorMsg($this->bash->languageContainer->io->database->userNotFound);
+        }
+        catch (Exception $e) {
+            $this->bash->errorMsg($e->getMessage());
+        }
     }
-
-
 
     /**
      * Az egyes újságírók lekérdezését irányító eljárás.
@@ -196,23 +132,16 @@ class Controller
      * 
      * @return void
      */
-
     private function execSelect(): void
     {
-
         if(!is_dir("json")) mkdir("json");
 
-
-        try
-        {
-
+        try {
             // Újságíró lekérése azonosító alapján.
             $journalist = $this->jjmh->importById($this->input->id);
 
-
             // prefix az új fájlnak. év, hó, nap, óra, perc, másodperc
             $prefix = date("ymdHis", time());
-
 
             // Ha a PHP Warning funkció nincs kikapcsolva az .ini-ben, kiírja a
             // hibát és a verem hivásokat az elsődleges kimenetre...
@@ -220,28 +149,20 @@ class Controller
             // Program.php(7)
             //
             if(file_put_contents("json/".$prefix.".json", $journalist->toJson()))
-                $this->bash->successfulMsg("Kiírva a  ".__DIR__."/json/{$prefix}.json fájlba.");
-
+                $this->bash->successfulMsg(
+                    $this->bash->languageContainer->select->success.__DIR__."/json/".$prefix);
             else 
-                throw new Exception("Jogosultság megtagadva: ".(get_current_user()));
-
+                throw new Exception(
+                    $this->bash->languageContainer->io->database->importSuccess.(get_current_user()));
         }
-
-        catch (PDOException $e)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        catch (PDOException $e) {
+            $this->bash->errorMsg($e->getMessage());
         }
-
-        catch (LengthException $e)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        catch (LengthException $e) {
+            $this->bash->errorMsg($this->bash->languageContainer->io->database->userNotFound);
         }
-
-        catch (Exception $e)
-        {
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        catch (Exception $e) {
+            $this->bash->errorMsg($e->getMessage());
         }
     }
 
@@ -258,24 +179,17 @@ class Controller
 
     private function execSelectAll(): void
     {
-
         if(!is_dir("json")) mkdir("json");
 
-
-        try 
-        {
-
+        try {
             // Összes újságíró lekérése csoport alapján.
             $journalists = $this->jjmh->importAll($this->input->group);
 
-            
             // A kapott tömböt json formátummá konvertálja 
             $outputStr = Journalist::assocToJson($journalists);
 
-
             // prefix az új fájlnak. év, hó, nap, óra, perc, másodperc
             $prefix = date("ymdHis", time());
-
 
             // Ha a PHP Warning funkció nincs kikapcsolva az .ini-ben, kiírja a
             // hibát és a verem hivásokat az elsődleges kimenetre...
@@ -283,29 +197,19 @@ class Controller
             // Program.php(7)
             //
             if( file_put_contents("json/".$prefix.".json", $outputStr))
-                $this->bash->successfulMsg("Kiírva a  ".__DIR__."/json/{$prefix}.json fájlba.");
-                
+                $this->bash->successfulMsg($this->bash->languageContainer->io->file->writeSuccess.__DIR__."/json/".$prefix);
             else 
-                throw new Exception("Jogosultság megtagadva: ".(get_current_user()));
-                
+                throw new Exception($this->bash->languageContainer->io->file->writeDenied.(get_current_user()));
         } 
 
-        catch (PDOException $e)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        catch (PDOException $e) {
+            $this->bash->errorMsg($e->getMessage());
         }
-
-        catch (LengthException $e)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        catch (LengthException $e) {
+            $this->bash->errorMsg($e->getMessage());
         }
-
-        catch (Exception $e)
-        {
-
-            $this->bash->errorMsg("Hiba: ".$e->getMessage());
+        catch (Exception $e) {
+            $this->bash->errorMsg($e->getMessage());
         }
     }
 
@@ -318,13 +222,10 @@ class Controller
      * @throws RuntimeException
      * 
      */
-
     private function journalistValidator(object $data)
     {
-
         if (!(isset($data->name) && isset($data->name) && isset($data->name)))
-                throw new RuntimeException("Az adatszerkezet nem megfelelő formátumú.");
-                    
+                throw new RuntimeException("The data structure is not in the correct format.");
     }
 
 
@@ -335,18 +236,11 @@ class Controller
      * @param mixed $data
      * 
      */
-
      private function pushDataToJjmh($data)
      {
-
-        if (is_array($data))
-        {                
-
-            foreach($data as $journalist)
-            {
-
+        if (is_array($data)) {
+            foreach($data as $journalist) {
                 $this->journalistValidator($journalist);
-
 
                 $this->jjmh->addJournalist(
                     new Journalist(
@@ -360,10 +254,8 @@ class Controller
         
         else
         {
-
             $this->journalistValidator($data);
 
-    
             $this->jjmh->addJournalist(
                 new Journalist(
                     $data->name,

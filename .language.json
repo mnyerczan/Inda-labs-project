@@ -1,0 +1,65 @@
+{
+    "hungary":{
+        "title" : "Házi feladat",
+        "main" : {
+            "describe" : "Kérlek válassz egyet az alábbi parancsok közül:",
+            "help" : "Rossz parancs! Talán erre gondoltál: ",
+            "wrong" : "Nem létező parancs: ",
+            "remainingAttempts" : " Hátralévő próbálkozások száma: "
+        },
+        "io" : {
+            "file" : {
+                "writeDenied" : "Nincs jogosultság a fájl létrehozáságoz: ",
+                "writeSuccess" : "Kiírva a következő fájlba: ",
+                "wrongMimeType" : "Csak json formátumú fájlt adhatsz meg"
+            },
+            "database" : {
+                "modifySuccess" : "Módosítás sikeres!",
+                "importSuccess" : "A feltöltés sikeres!",
+                "userNotFound" : "Nincs ilyen újságíró a rendszerben"
+            }
+        },
+        "commands" : {
+            "import" : {
+                "command" : "import",
+                "message" : " import\t\tBe tudsz tölteni json formátumú fájlból egy újságírót,",
+                "get" : {
+                    "path" : "Kérem az elérendő fájl útvonalát, vagy nevét, ha ebben a mappában van: ",
+                    "wrong" : "Érvénytelen útvonal: "
+                },
+                "RuntimeException" : "Csak Json formátumú fájlt adhatsz meg!"
+            },
+            "update" : {
+                "command" : "update",
+                "message" : " update\t\tAz újságíró adatait tudod módosítani álnevével való azonosításával,",
+                "get" : {
+                    "newAlias" : "Kérem az újságíró jelenlegi álnevét!",
+                    "name" : "Kérem az újságíró új nevét!",
+                    "alias" : "Kérem az újságíró új álnevét!",
+                    "group" : "Kérem az újságíró új csoportját!"
+                },
+                "LengthException" : "Nincs ilyen újságíró."
+            },
+            "select" : {
+                "command" : "select",
+                "message" : " select\t\tEgy újságíró adatait tudod kiíratni az azonosítója alapján,",
+                "get" : {
+                    "id" : "Kérlek add meg a keresett újságíró azonosítóját!",
+                    "wrong" : "Kérlek számot adj meg! Hátralévő próbálkozások száma: "
+                },
+                "lengthException" : "Nincs ilyen újságíró a rendszerben"
+            },
+            "selectAll" : {
+                "command" : "select-all",
+                "message" : " select-all\tÚjságírók csoportját tudod kiíratni fájlba.\n\t\t\t- Ha nem adsz meg csoportnevet, az összes újságíró kiírásra kerül",
+                "get" : {
+                    "group" : "Kérlek adj meg a szűréshez egy csoportot!\nHa csak nyomsz egy entert, a szűrés minden újságírót ki fog listázni"
+                }
+            },
+            "exit" : {
+                "command" : "exit",
+                "message" : " exit\t\tKilépés a programból."
+            }
+        }
+    }
+}
