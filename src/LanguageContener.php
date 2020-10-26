@@ -97,7 +97,7 @@ class LanguageContener
      */
     public function setUp(?string $language = null)
     {
-        if (array_key_exists($language, $this->fileContent))
+        if (array_key_exists($language, get_object_vars($this->fileContent)))
             $this->messages = (object)$this->reqursiveLoad($this->messages, $this->fileContent->$language);
         else
             $this->messages = $this->arrayToObject($this->messages);

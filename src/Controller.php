@@ -88,7 +88,7 @@ class Controller
 
             // Újságírók exportálása az adatbázisba
             $this->jjmh->export();
-            $this->bash->successfulMsg($this->bash->languageContainer->import->success);
+            $this->bash->successfulMsg($this->bash->languageContainer->io->database->importSuccess);
         }
         catch (PDOException $e) {
             $this->bash->errorMsg($e->getMessage());
@@ -113,7 +113,7 @@ class Controller
             // Beletesszük a kapott adatokat a jjmh objektumba
             $this->pushDataToJjmh($this->input);
             $this->jjmh->update($this->input->oldAlias);
-            $this->bash->successfulMsg($this->bash->languageContainer->update->success);
+            $this->bash->successfulMsg($this->bash->languageContainer->io->database->modifySuccess);
         }
         catch (PDOException $e) {
             $this->bash->errorMsg($e->getMessage());

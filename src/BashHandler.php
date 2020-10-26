@@ -214,7 +214,7 @@ class BashHandler
                             $output["name"] = readline();
 
                             // alias
-                            $this->msg($this->languageContaine->update->get->alias);
+                            $this->msg($this->languageContainer->update->get->alias);
                             $this->prompt();
                             $output["alias"] = readline();   
 
