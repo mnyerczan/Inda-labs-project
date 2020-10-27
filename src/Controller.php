@@ -72,11 +72,8 @@ class Controller
     /**
      * Import művelet végrehajtása külső Json fájlból. 
      * A fájl csak egyetlen újságíró objektumot írhat le.     
-     * 
-     * 
      * @return void
      */
-
     private function execImport(): void
     {        
         try {
@@ -100,8 +97,6 @@ class Controller
 
     /**
      * A módosítást irányító eljárás.
-     * 
-     * 
      * @return void
      */
     private function execUpdate(): void
@@ -128,8 +123,6 @@ class Controller
 
     /**
      * Az egyes újságírók lekérdezését irányító eljárás.
-     * 
-     * 
      * @return void
      */
     private function execSelect(): void
@@ -150,7 +143,7 @@ class Controller
             //
             if(file_put_contents("json/".$prefix.".json", $journalist->toJson()))
                 $this->bash->successfulMsg(
-                    $this->bash->languageContainer->select->success.__DIR__."/json/".$prefix);
+                    $this->bash->languageContainer->io->file->writeSuccess.__DIR__."/json/".$prefix);
             else 
                 throw new Exception(
                     $this->bash->languageContainer->io->database->importSuccess.(get_current_user()));
@@ -167,16 +160,11 @@ class Controller
     }
 
 
-
-
     /**
      * Az összes, vagy csoportos újságíri lekérdezéseket irányító eljárás.
-     * 
      * @param object $this->input
-     * 
      * @return void
      */
-
     private function execSelectAll(): void
     {
         if(!is_dir("json")) mkdir("json");
@@ -213,14 +201,10 @@ class Controller
         }
     }
 
-    
-
     /**
      * Megvizsgáljuk, hogy a beérkező adatszerkezet újságíró kompatibilis-e.
-     * 
      * @param object $data
      * @throws RuntimeException
-     * 
      */
     private function journalistValidator(object $data)
     {
@@ -228,13 +212,9 @@ class Controller
                 throw new RuntimeException("The data structure is not in the correct format.");
     }
 
-
-
     /**
      * Absztrakcó a kapott adatszerkezet jjmh felé átadáshoz.
-     * 
      * @param mixed $data
-     * 
      */
      private function pushDataToJjmh($data)
      {
@@ -247,13 +227,10 @@ class Controller
                         $journalist->name,
                         $journalist->alias,
                         $journalist->group,
-                    )
-                );
+                ));
             }
-        }
-        
-        else
-        {
+        }        
+        else{
             $this->journalistValidator($data);
 
             $this->jjmh->addJournalist(
@@ -261,8 +238,7 @@ class Controller
                     $data->name,
                     $data->alias,
                     $data->group,                
-                )
-            );
+            ));
         }        
      }
 }
